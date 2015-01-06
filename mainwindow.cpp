@@ -143,7 +143,7 @@ void MainWindow::btn_led2_clicked(){
     box.setText("麻蛋别点了,这个灯不能用！IO口被占了傻吊！");
     box.exec();
     sbuf ="L2";
-    senddata(sbuf);
+    //senddata(sbuf);
 }
 
 void MainWindow::btn_led3_clicked(){
@@ -151,7 +151,7 @@ void MainWindow::btn_led3_clicked(){
     box.setText("麻蛋别点了,这个灯不能用！IO口被占了傻吊！");
     box.exec();
     sbuf ="L3";
-    senddata(sbuf);
+   // senddata(sbuf);
 }
 
 void MainWindow::btn_led4_clicked(){
@@ -159,7 +159,7 @@ void MainWindow::btn_led4_clicked(){
     box.setText("麻蛋别点了,这个灯不能用！IO口被占了傻吊！");
     box.exec();
     sbuf ="L4";
-    senddata(sbuf);
+   // senddata(sbuf);
 }
 
 void MainWindow::senddata(QString buf){
