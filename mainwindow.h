@@ -19,7 +19,7 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QThread>
-
+#include "buttonthread.h"
 namespace Ui {
 class MainWindow;
 }
@@ -53,23 +53,25 @@ private slots:
     void on_btnTemp_clicked();
     void on_btnLight_clicked();
 
-    void startOrStopThreadSmoke();
-    void startOrStopThreadTemp();
-
+    //void startOrStopThreadSmoke();
+   // void startOrStopThreadTemp();
+    //void startOrStopThreadLight();
 private:
     QString sbuf;
     QString portName;
     QStringList m_listcomboName;
     HKEY hKey;
 
-    Thread threadSmoke;
-
-    static bool flagLED = false;
-    static bool flagRelay = false;
-    static bool flagInfrared = false;
-    static bool flagSmoke = false;
-    static bool flagTemp = false;
-    static bool flagLight = false;
+    ButtonThread threadSmoke;
+    ButtonThread threadTemp;
+    ButtonThread threadLight;
+    QThread xxx;
+    bool flagLED;
+    bool flagRelay;
+    bool flagInfrared;
+    bool flagSmoke;
+    bool flagTemp;
+    bool flagLight;
 
     wchar_t keyname[256]; //键名数组
     char keyvalue[256];  //键值数组

@@ -18,11 +18,20 @@ void ButtonThread::stop(){
     stopped = true;
 }
 
-void ButtonThread::setMessage(QString message){
+void ButtonThread::setMessage(QString message, QSerialPort *serialport){
     messageStr = message;
+    serial = serialport;
+}
+
+void ButtonThread::senddata(QString buf){
+    qDebug()<<buf;
+    serial->write(buf.toLatin1());
 }
 
 void ButtonThread::printMessage(){
+    senddata(messageStr);
     qDebug()<<messageStr;
     sleep(1);
 }
+
+

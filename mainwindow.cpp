@@ -8,7 +8,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     ui->setupUi(this);
-
+    flagLED = false;
+    flagRelay = false;
+    flagInfrared = false;
+    flagSmoke = false;
+    flagTemp = false;
+    flagLight = false;
     tcpServer=new QTcpServer(this);
     if(!tcpServer->listen(QHostAddress::Any,8812))
     {//监听本机6666端口。若出错，则输出错误信息，并关闭
@@ -171,6 +176,12 @@ void MainWindow::readdata(){
 
 MainWindow::~MainWindow()
 {
+    threadSmoke.stop();
+    threadTemp.stop();
+    threadLight.stop();
+    threadSmoke.wait();
+    threadTemp.wait();
+    threadLight.wait();
     if(serialport->isOpen())
     {
         serialport->close();
@@ -180,42 +191,95 @@ MainWindow::~MainWindow()
 
 void MainWindow::btn_led1_clicked(){
     if (flagLED){
-        sbuf = "#100000#";
+        sbuf = "*100000#";
         qDebug()<<"LED关";
         senddata(sbuf);
+        ui->btnLED1->setText(tr("关闭"));
     } else{
-        sbuf ="#110000#";
+        sbuf ="*110000#";
         qDebug()<<"LED开";
         senddata(sbuf);
+        ui->btnLED1->setText(tr("开启"));
     }
+    flagLED = !flagLED;
 }
 
 void MainWindow::on_btnRelay_clicked()
 {
-    sbuf ="#210000#";
-    senddata(sbuf);
+    if (flagRelay){
+        sbuf = "*200000#";
+        qDebug()<<"继电器关";
+        senddata(sbuf);
+        ui->btnRelay->setText(tr("关闭"));
+    } else{
+        sbuf ="*210000#";
+        qDebug()<<"继电器开";
+        senddata(sbuf);
+        ui->btnRelay->setText(tr("开启"));
+    }
+    flagRelay = !flagRelay;
 }
 
 void MainWindow::on_btnInfrared_clicked()
 {
-    sbuf ="#310000#";
-    senddata(sbuf);
+    if (flagInfrared){
+        sbuf = "*300000#";
+        qDebug()<<"红外关";
+        senddata(sbuf);
+        ui->btnInfrared->setText(tr("关闭"));
+    } else{
+        sbuf ="*310000#";
+        qDebug()<<"红外开";
+        senddata(sbuf);
+        ui->btnInfrared->setText(tr("开启"));
+    }
+    flagInfrared = !flagInfrared;
 }
 
 void MainWindow::on_btnSmoke_clicked()
 {
-    sbuf ="#410000#";
-    senddata(sbuf);
+    threadSmoke.setMessage("*410000#", serialport);
+    if (threadSmoke.isRunning()){
+        ui->btnSmoke->setText(tr("关闭"));
+        threadSmoke.stop();
+        ui->btnSmoke->setText(tr("开启"));
+    } else{
+        ui->btnSmoke->setText(tr("开启"));
+        threadSmoke.start();
+        ui->btnSmoke->setText(tr("关闭"));
+    }
+    //sbuf ="#410000#";
+    //senddata(sbuf);
 }
 
 void MainWindow::on_btnTemp_clicked()
 {
-    sbuf ="#510000#";
-    senddata(sbuf);
+    threadTemp.setMessage("*410000#", serialport);
+    if (threadTemp.isRunning()){
+        ui->btnTemp->setText(tr("关闭"));
+        threadTemp.stop();
+        ui->btnTemp->setText(tr("开启"));
+    } else{
+        ui->btnTemp->setText(tr("开启"));
+        threadTemp.start();
+        ui->btnTemp->setText(tr("关闭"));
+    }
+   // sbuf ="#510000#";
+   // senddata(sbuf);
 }
 
 void MainWindow::on_btnLight_clicked()
 {
-    sbuf ="#610000#";
-    senddata(sbuf);
+    threadLight.setMessage("*610000#", serialport);
+    if (threadLight.isRunning()){
+        ui->btnLight->setText(tr("关闭"));
+        threadLight.stop();
+        ui->btnLight->setText(tr("开启"));
+    } else{
+        ui->btnLight->setText(tr("开启"));
+        threadLight.start();
+        ui->btnLight->setText(tr("关闭"));
+    }
+    //sbuf ="#610000#";
+    //senddata(sbuf);
 }
