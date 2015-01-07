@@ -314,7 +314,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_2">
+       <widget class="QPushButton" name="btnRelay">
         <property name="text">
          <string>响</string>
         </property>
@@ -361,7 +361,7 @@
       <string>00000</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_3">
+    <widget class="QPushButton" name="btnSmoke">
      <property name="geometry">
       <rect>
        <x>40</x>
@@ -387,10 +387,10 @@
     <property name="title">
      <string>温度</string>
     </property>
-    <widget class="QPushButton" name="pushButton_4">
+    <widget class="QPushButton" name="btnTemp">
      <property name="geometry">
       <rect>
-       <x>50</x>
+       <x>30</x>
        <y>50</y>
        <width>75</width>
        <height>23</height>
@@ -400,7 +400,7 @@
       <string>开启</string>
      </property>
     </widget>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -452,7 +452,7 @@
       <string>状态</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_5">
+    <widget class="QPushButton" name="btnInfrared">
      <property name="geometry">
       <rect>
        <x>50</x>
@@ -517,7 +517,7 @@
       <string>TextLabel</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_6">
+    <widget class="QPushButton" name="btnLight">
      <property name="geometry">
       <rect>
        <x>50</x>
@@ -556,7 +556,7 @@
       <string>实时显示</string>
      </property>
     </widget>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>30</x>

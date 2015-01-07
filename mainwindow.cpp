@@ -132,11 +132,6 @@ void MainWindow::btn_send_clicked(){
     sbuf = ui->teSendData->text();
     senddata(sbuf);
 }
-void MainWindow::btn_led1_clicked(){
-
-    sbuf ="L1";
-    senddata(sbuf);
-}
 
 void MainWindow::btn_led2_clicked(){
     QMessageBox box;
@@ -181,4 +176,46 @@ MainWindow::~MainWindow()
         serialport->close();
     }
     delete ui;
+}
+
+void MainWindow::btn_led1_clicked(){
+    if (flagLED){
+        sbuf = "#100000#";
+        qDebug()<<"LED关";
+        senddata(sbuf);
+    } else{
+        sbuf ="#110000#";
+        qDebug()<<"LED开";
+        senddata(sbuf);
+    }
+}
+
+void MainWindow::on_btnRelay_clicked()
+{
+    sbuf ="#210000#";
+    senddata(sbuf);
+}
+
+void MainWindow::on_btnInfrared_clicked()
+{
+    sbuf ="#310000#";
+    senddata(sbuf);
+}
+
+void MainWindow::on_btnSmoke_clicked()
+{
+    sbuf ="#410000#";
+    senddata(sbuf);
+}
+
+void MainWindow::on_btnTemp_clicked()
+{
+    sbuf ="#510000#";
+    senddata(sbuf);
+}
+
+void MainWindow::on_btnLight_clicked()
+{
+    sbuf ="#610000#";
+    senddata(sbuf);
 }

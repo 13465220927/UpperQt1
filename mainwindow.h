@@ -18,6 +18,7 @@
 #include <windows.h>
 #include <QDebug>
 #include <QMessageBox>
+#include <QThread>
 
 namespace Ui {
 class MainWindow;
@@ -46,11 +47,30 @@ private slots:
     void btn_led4_clicked();
     void sendMessage();
 
+    void on_btnRelay_clicked();
+    void on_btnInfrared_clicked();
+    void on_btnSmoke_clicked();
+    void on_btnTemp_clicked();
+    void on_btnLight_clicked();
+
+    void startOrStopThreadSmoke();
+    void startOrStopThreadTemp();
+
 private:
     QString sbuf;
     QString portName;
     QStringList m_listcomboName;
     HKEY hKey;
+
+    Thread threadSmoke;
+
+    static bool flagLED = false;
+    static bool flagRelay = false;
+    static bool flagInfrared = false;
+    static bool flagSmoke = false;
+    static bool flagTemp = false;
+    static bool flagLight = false;
+
     wchar_t keyname[256]; //键名数组
     char keyvalue[256];  //键值数组
     DWORD keysize, type, valuesize;
