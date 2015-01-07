@@ -35,8 +35,11 @@ public:
     QSerialPort *serialport;
     void InitUI();
     void senddata(QString buf);
+
     QString GetCommName(int index, QString keyorvalue);
     ~MainWindow();
+signals:
+    void writeFinish();
 private slots:
     void openPort();
     void readdata();
@@ -46,6 +49,8 @@ private slots:
     void btn_led3_clicked();
     void btn_led4_clicked();
     void sendMessage();
+    void sendToSerial();
+    void dataCalcAndSend();
 
     void on_btnRelay_clicked();
     void on_btnInfrared_clicked();
@@ -61,7 +66,9 @@ private:
     QString portName;
     QStringList m_listcomboName;
     HKEY hKey;
-
+    qint16 serCount;
+    qint8 bit3;
+    qint16 countSerialSend;
     ButtonThread threadSmoke;
     ButtonThread threadTemp;
     ButtonThread threadLight;

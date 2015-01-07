@@ -8,6 +8,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     ui->setupUi(this);
+    countSerialSend = 0;
+    bit3 = 0;
     flagLED = false;
     flagRelay = false;
     flagInfrared = false;
@@ -15,6 +17,7 @@ MainWindow::MainWindow(QWidget *parent) :
     flagTemp = false;
     flagLight = false;
     tcpServer=new QTcpServer(this);
+    sbuf = "SerialPortOpen";
     if(!tcpServer->listen(QHostAddress::Any,8812))
     {//监听本机6666端口。若出错，则输出错误信息，并关闭
       qDebug()<<tcpServer->errorString();
@@ -27,11 +30,19 @@ MainWindow::MainWindow(QWidget *parent) :
 
     serialport = new QSerialPort(this);
     connect(ui->btnOpenSerial, SIGNAL(clicked()), this, SLOT(openPort()));
+    connect(ui->btnSend, SIGNAL(clicked()), this, SLOT(btn_send_clicked()));
+
+//    connect(ui->btnLED1, SIGNAL(clicked()), this, SLOT(dataCalcAndSend()));
+//    connect(ui->btnRelay, SIGNAL(clicked()), this, SLOT(dataCalcAndSend()));
+//    connect(ui->btnInfrared, SIGNAL(clicked()), this, SLOT(dataCalcAndSend()));
+//    connect(ui->btnSmoke, SIGNAL(clicked()), this, SLOT(dataCalcAndSend()));
+//    connect(ui->btnTemp, SIGNAL(clicked()), this, SLOT(dataCalcAndSend()));
+//    connect(ui->btnLight, SIGNAL(clicked()), this, SLOT(dataCalcAndSend()));
     connect(ui->btnLED1, SIGNAL(clicked()), this, SLOT(btn_led1_clicked()));
     connect(ui->btnLED2, SIGNAL(clicked()), this, SLOT(btn_led2_clicked()));
     connect(ui->btnLED3, SIGNAL(clicked()), this, SLOT(btn_led3_clicked()));
     connect(ui->btnLED4, SIGNAL(clicked()), this, SLOT(btn_led4_clicked()));
-    connect(ui->btnSend, SIGNAL(clicked()), this, SLOT(btn_send_clicked()));
+    connect(this,SIGNAL(writeFinish()), this, SLOT(dataCalcAndSend()));
 }
 
 void MainWindow::sendMessage(){
@@ -80,6 +91,7 @@ void MainWindow::openPort(){//Open the Port and Ready to read from COM
         serialport->setParity(QSerialPort::NoParity);
         serialport->setStopBits(QSerialPort::OneStop);
         serialport->setFlowControl(QSerialPort::NoFlowControl);
+        senddata(sbuf);
         connect(serialport,SIGNAL(readyRead()), this, SLOT(readdata()));
     }else{
         QMessageBox box;
@@ -164,7 +176,11 @@ void MainWindow::btn_led4_clicked(){
 
 void MainWindow::senddata(QString buf){
     qDebug()<<buf;
-    serialport->write(buf.toLatin1());
+    serCount = serialport->write(buf.toLatin1());
+    qDebug()<<serCount;
+    if (serCount == 8){
+        emit writeFinish();
+    }
 }
 
 void MainWindow::readdata(){
@@ -174,14 +190,43 @@ void MainWindow::readdata(){
     ui->teRecData->insertPlainText("\n");
 }
 
+void MainWindow::dataCalcAndSend(){
+
+//    flagLED = !flagLED;
+//    flagRelay = !flagRelay;
+//    flagInfrared = !flagInfrared;
+//    flagSmoke = !flagSmoke;
+//    flagTemp = !flagTemp;
+//    flagLight = !flagLight;
+//    if (flagLED){countSerialSend++; bit3+=1; }else{countSerialSend--; bit3-=1;}
+//    if (flagRelay){countSerialSend++; bit3+=2; }else{countSerialSend--; bit3-=2;}
+//    if (flagInfrared){countSerialSend++; bit3+=4; }else{countSerialSend--;bit3-=4;}
+//    if (flagSmoke){countSerialSend++; bit3+=8; }else{countSerialSend--;bit3-=8;}
+//    if (flagTemp){countSerialSend++; bit3+=16; }else{countSerialSend--;bit3-=16;}
+//    if (flagLight){countSerialSend++; bit3+=32; }else{countSerialSend--;bit3-=32;}
+    //if(sbuf == "SerialPortOpen") exit;
+    char str = (char)bit3;
+    sbuf += str;
+    sbuf += "0000#";
+    //connect(serialport,SIGNAL())
+    senddata(sbuf);
+    //qDebug()<<sbuf;
+    //qDebug()<<countSerialSend;
+    qDebug()<<"bit3="<<bit3;
+
+}
+
+void MainWindow::sendToSerial(){
+
+}
 MainWindow::~MainWindow()
 {
-    threadSmoke.stop();
-    threadTemp.stop();
-    threadLight.stop();
-    threadSmoke.wait();
-    threadTemp.wait();
-    threadLight.wait();
+//    threadSmoke.stop();
+//    threadTemp.stop();
+//    threadLight.stop();
+//    threadSmoke.wait();
+//    threadTemp.wait();
+//    threadLight.wait();
     if(serialport->isOpen())
     {
         serialport->close();
@@ -190,96 +235,116 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::btn_led1_clicked(){
-    if (flagLED){
-        sbuf = "*100000#";
-        qDebug()<<"LED关";
-        senddata(sbuf);
-        ui->btnLED1->setText(tr("关闭"));
-    } else{
-        sbuf ="*110000#";
-        qDebug()<<"LED开";
-        senddata(sbuf);
-        ui->btnLED1->setText(tr("开启"));
-    }
     flagLED = !flagLED;
+    //qDebug()<<bit3;
+    if (flagLED){countSerialSend++; bit3+=1; }else{countSerialSend--; bit3-=1;}
+    sbuf = "*1";
+   // dataCalcAndSend();
+//    if (flagLED){
+//        sbuf = "*100000#";
+//        qDebug()<<"LED关";
+//        senddata(sbuf);
+//        ui->btnLED1->setText(tr("关闭"));
+//    } else{
+//        sbuf ="*110000#";
+//        qDebug()<<"LED开";
+//        senddata(sbuf);
+//        ui->btnLED1->setText(tr("开启"));
+//    }
+
 }
 
-void MainWindow::on_btnRelay_clicked()
-{
-    if (flagRelay){
-        sbuf = "*200000#";
-        qDebug()<<"继电器关";
-        senddata(sbuf);
-        ui->btnRelay->setText(tr("关闭"));
-    } else{
-        sbuf ="*210000#";
-        qDebug()<<"继电器开";
-        senddata(sbuf);
-        ui->btnRelay->setText(tr("开启"));
-    }
+void MainWindow::on_btnRelay_clicked(){
     flagRelay = !flagRelay;
+    if (flagRelay){countSerialSend++; bit3+=2; }else{countSerialSend--; bit3-=2;}
+    sbuf = "*2";
+    //dataCalcAndSend();
+//    if (flagRelay){
+//        sbuf = "*200000#";
+//        qDebug()<<"继电器关";
+//        senddata(sbuf);
+//        ui->btnRelay->setText(tr("关闭"));
+//    } else{
+//        sbuf ="*210000#";
+//        qDebug()<<"继电器开";
+//        senddata(sbuf);
+//        ui->btnRelay->setText(tr("开启"));
+//    }
+
 }
 
-void MainWindow::on_btnInfrared_clicked()
-{
-    if (flagInfrared){
-        sbuf = "*300000#";
-        qDebug()<<"红外关";
-        senddata(sbuf);
-        ui->btnInfrared->setText(tr("关闭"));
-    } else{
-        sbuf ="*310000#";
-        qDebug()<<"红外开";
-        senddata(sbuf);
-        ui->btnInfrared->setText(tr("开启"));
-    }
+void MainWindow::on_btnInfrared_clicked(){
     flagInfrared = !flagInfrared;
+    if (flagInfrared){countSerialSend++; bit3+=4; }else{countSerialSend--;bit3-=4;}
+    sbuf = "*3";
+    //dataCalcAndSend();
+//    if (flagInfrared){
+//        sbuf = "*300000#";
+//        qDebug()<<"红外关";
+//        senddata(sbuf);
+//        ui->btnInfrared->setText(tr("关闭"));
+//    } else{
+//        sbuf ="*310000#";
+//        qDebug()<<"红外开";
+//        senddata(sbuf);
+//        ui->btnInfrared->setText(tr("开启"));
+//    }
+
 }
 
-void MainWindow::on_btnSmoke_clicked()
-{
-    threadSmoke.setMessage("*410000#", serialport);
-    if (threadSmoke.isRunning()){
-        ui->btnSmoke->setText(tr("关闭"));
-        threadSmoke.stop();
-        ui->btnSmoke->setText(tr("开启"));
-    } else{
-        ui->btnSmoke->setText(tr("开启"));
-        threadSmoke.start();
-        ui->btnSmoke->setText(tr("关闭"));
-    }
+void MainWindow::on_btnSmoke_clicked(){
+    flagSmoke = !flagSmoke;
+    if (flagSmoke){countSerialSend++; bit3+=8; }else{countSerialSend--;bit3-=8;}
+    sbuf = "*4";
+    //dataCalcAndSend();
+//    threadSmoke.setMessage("*410000#", serialport);
+//    if (threadSmoke.isRunning()){
+//        ui->btnSmoke->setText(tr("关闭"));
+//        threadSmoke.stop();
+//        ui->btnSmoke->setText(tr("开启"));
+//    } else{
+//        ui->btnSmoke->setText(tr("开启"));
+//        threadSmoke.start();
+//        ui->btnSmoke->setText(tr("关闭"));
+//    }
     //sbuf ="#410000#";
     //senddata(sbuf);
 }
 
-void MainWindow::on_btnTemp_clicked()
-{
-    threadTemp.setMessage("*410000#", serialport);
-    if (threadTemp.isRunning()){
-        ui->btnTemp->setText(tr("关闭"));
-        threadTemp.stop();
-        ui->btnTemp->setText(tr("开启"));
-    } else{
-        ui->btnTemp->setText(tr("开启"));
-        threadTemp.start();
-        ui->btnTemp->setText(tr("关闭"));
-    }
+void MainWindow::on_btnTemp_clicked(){
+    flagTemp = !flagTemp;
+    if (flagTemp){countSerialSend++; bit3+=16; }else{countSerialSend--;bit3-=16;}
+    sbuf = "*5";
+    //dataCalcAndSend();
+//    threadTemp.setMessage("*510000#", serialport);
+//    if (threadTemp.isRunning()){
+//        ui->btnTemp->setText(tr("关闭"));
+//        threadTemp.stop();
+//        ui->btnTemp->setText(tr("开启"));
+//    } else{
+//        ui->btnTemp->setText(tr("开启"));
+//        threadTemp.start();
+//        ui->btnTemp->setText(tr("关闭"));
+//    }
    // sbuf ="#510000#";
    // senddata(sbuf);
 }
 
-void MainWindow::on_btnLight_clicked()
-{
-    threadLight.setMessage("*610000#", serialport);
-    if (threadLight.isRunning()){
-        ui->btnLight->setText(tr("关闭"));
-        threadLight.stop();
-        ui->btnLight->setText(tr("开启"));
-    } else{
-        ui->btnLight->setText(tr("开启"));
-        threadLight.start();
-        ui->btnLight->setText(tr("关闭"));
-    }
+void MainWindow::on_btnLight_clicked(){
+    flagLight = !flagLight;
+    if (flagLight){countSerialSend++; bit3+=32; }else{countSerialSend--;bit3-=32;}
+    sbuf = "*6";
+    //dataCalcAndSend();
+//    threadLight.setMessage("*610000#", serialport);
+//    if (threadLight.isRunning()){
+//        ui->btnLight->setText(tr("关闭"));
+//        threadLight.stop();
+//        ui->btnLight->setText(tr("开启"));
+//    } else{
+//        ui->btnLight->setText(tr("开启"));
+//        threadLight.start();
+//        ui->btnLight->setText(tr("关闭"));
+//    }
     //sbuf ="#610000#";
     //senddata(sbuf);
 }
