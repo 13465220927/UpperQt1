@@ -19,6 +19,7 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QThread>
+#include <QtCore>
 #include "buttonthread.h"
 namespace Ui {
 class MainWindow;
@@ -35,12 +36,13 @@ public:
     QSerialPort *serialport;
     void InitUI();
     void senddata(QString buf);
-
+    void dataCalcAndSend();
     QString GetCommName(int index, QString keyorvalue);
     ~MainWindow();
-signals:
-    void writeFinish();
+//signals:
+//    void writeFinish();
 private slots:
+   // void timerSendData();
     void openPort();
     void readdata();
     void btn_send_clicked();
@@ -50,7 +52,7 @@ private slots:
     void btn_led4_clicked();
     void sendMessage();
     void sendToSerial();
-    void dataCalcAndSend();
+    //void dataCalcAndSend();
 
     void on_btnRelay_clicked();
     void on_btnInfrared_clicked();
@@ -58,9 +60,6 @@ private slots:
     void on_btnTemp_clicked();
     void on_btnLight_clicked();
 
-    //void startOrStopThreadSmoke();
-   // void startOrStopThreadTemp();
-    //void startOrStopThreadLight();
 private:
     QString sbuf;
     QString portName;
@@ -72,6 +71,8 @@ private:
     ButtonThread threadSmoke;
     ButtonThread threadTemp;
     ButtonThread threadLight;
+
+    ButtonThread threadSend;
     QThread xxx;
     bool flagLED;
     bool flagRelay;
