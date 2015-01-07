@@ -31,7 +31,7 @@ void ButtonThread::senddata(QString buf){
 void ButtonThread::printMessage(){
     senddata(messageStr);
    // qDebug()<<messageStr;
-    sleep(2);
+    sleep(3);
 }
 
 

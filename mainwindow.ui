@@ -348,7 +348,7 @@
       <string>数据:</string>
      </property>
     </widget>
-    <widget class="QLabel" name="label_10">
+    <widget class="QLabel" name="lblSmoke">
      <property name="geometry">
       <rect>
        <x>77</x>
@@ -418,7 +418,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="label_11">
+       <widget class="QLabel" name="lblTemp">
         <property name="text">
          <string>0000000</string>
         </property>
@@ -465,7 +465,7 @@
       <string>开启</string>
      </property>
     </widget>
-    <widget class="QLabel" name="label_12">
+    <widget class="QLabel" name="lblInfrared">
      <property name="geometry">
       <rect>
        <x>70</x>
@@ -504,7 +504,7 @@
       <string>数值:</string>
      </property>
     </widget>
-    <widget class="QLabel" name="label_14">
+    <widget class="QLabel" name="lblLight">
      <property name="geometry">
       <rect>
        <x>70</x>
