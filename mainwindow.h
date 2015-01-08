@@ -54,6 +54,7 @@ private slots:
     void sendMessage();
     void sendToSerial();
     //void dataCalcAndSend();
+    void showData();
     void newConnect();
 
     void on_btnRelay_clicked();
@@ -61,7 +62,12 @@ private slots:
     void on_btnSmoke_clicked();
     void on_btnTemp_clicked();
     void on_btnLight_clicked();
+    void btn_starttcp_clicked();
 
+    void on_btnShowData_clicked();
+
+signals:
+    void isShow();
 private:
     QString sbuf;
     QString portName;
@@ -82,12 +88,15 @@ private:
     bool flagSmoke;
     bool flagTemp;
     bool flagLight;
+    bool flagShow;
+    bool flagCon;
 
     QByteArray data;
     QByteArray dataTemp;
     QByteArray dataSmoke;
     QByteArray dataLight;
     QByteArray str;
+    QByteArray strPeople;
 
     wchar_t keyname[256]; //键名数组
     char keyvalue[256];  //键值数组

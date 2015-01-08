@@ -15,19 +15,29 @@ MainWindow::MainWindow(QWidget *parent) :
     flagSmoke = false;
     flagTemp = false;
     flagLight = false;
+    flagShow=false;
+    flagCon=false;
     tcpServer=new QTcpServer(this);
     sbuf = "SerialPortOpen";
-    if(!tcpServer->listen(QHostAddress::Any,8812))
-    {//监听本机6666端口。若出错，则输出错误信息，并关闭
-      qDebug()<<tcpServer->errorString();
-      close();
-    }
-    else{
-        ui->lbConnStatus->setText("ListenSucc");
-    }
-    connect(tcpServer,SIGNAL(newConnection()),this,SLOT(newConnect())); //连接信号和相应槽函数
+    ui->teNetwork->insertPlainText("服务器等待启动");
+    ui->teNetwork->insertPlainText("\n");
+    ui->btnInfrared->setEnabled(false);
+    ui->btnLED1->setEnabled(false);
+    ui->btnLED2->setEnabled(false);
+    ui->btnLED3->setEnabled(false);
+    ui->btnLED4->setEnabled(false);
+    ui->btnRelay->setEnabled(false);
+    ui->btnSmoke->setEnabled(false);
+    ui->btnLight->setEnabled(false);
+    ui->btnTemp->setEnabled(false);
+    ui->btnShowData->setEnabled(false);
+    ui->btnStartServer->setEnabled(false);
+    ui->btnSend->setEnabled(false);
 
     serialport = new QSerialPort(this);
+    connect(tcpServer,SIGNAL(newConnection()),this,SLOT(newConnect())); //连接信号和相应槽函数
+    connect(ui->btnStartServer,SIGNAL(clicked()), this, SLOT(btn_starttcp_clicked()));
+
     connect(ui->btnOpenSerial, SIGNAL(clicked()), this, SLOT(openPort()));
     connect(ui->btnSend, SIGNAL(clicked()), this, SLOT(btn_send_clicked()));
 
@@ -35,13 +45,25 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->btnLED2, SIGNAL(clicked()), this, SLOT(btn_led2_clicked()));
     connect(ui->btnLED3, SIGNAL(clicked()), this, SLOT(btn_led3_clicked()));
     connect(ui->btnLED4, SIGNAL(clicked()), this, SLOT(btn_led4_clicked()));
+    connect(this, SIGNAL(isShow()), this, SLOT(showData()));
 }
 
 /*Send Message to Android ,
  * use by TCP socket.
  * and this is the TCPServer
 */
-
+void MainWindow::btn_starttcp_clicked(){
+    if(!tcpServer->listen(QHostAddress::Any,8812))
+    {//监听本机8812端口。若出错，则输出错误信息，并关闭
+      qDebug()<<tcpServer->errorString();
+      close();
+    }
+    else{
+        ui->lbConnStatus->setText("ListenSucc");
+        ui->teNetwork->insertPlainText("服务器已启动");
+        ui->teNetwork->insertPlainText("\n");
+    }
+}
 void MainWindow::newConnect(){
     clientConnect = tcpServer->nextPendingConnection();
     connect(clientConnect, SIGNAL(readyRead()), this, SLOT(sendMessage()));
@@ -51,23 +73,36 @@ void MainWindow::sendMessage(){
     QByteArray block;
     QString readData;
     //QByteArray readData;
-    QDataStream out(&block, QIODevice::WriteOnly);
+
     QString ss;
     QByteArray strDataNoHandle;
-    out.setVersion(QDataStream::Qt_4_8);
-    out<<(quint16)0;
-    out.device()->seek(0);
-    out<<(quint16)(block.size()-sizeof(quint16));
+
 
     connect(clientConnect, &QTcpSocket::disconnected, clientConnect,&QTcpSocket::deleteLater);
+    if (!flagCon){
+      ui->teNetwork->insertPlainText("客户端已连接");
+      ui->teNetwork->insertPlainText("\n");
+      flagCon=true;
+    }
     qDebug()<<clientConnect->peerAddress();
 
     readData = clientConnect->readAll();
-
+    if (flagShow){
+        ss = "实时刷新中,访问被拒绝";
+        ui->teNetwork->insertPlainText("实时刷新中,访问被拒绝");
+        ui->teNetwork->insertPlainText("\n");
+        clientConnect->write(ss.toStdString().c_str(),strlen(ss.toStdString().c_str()));
+        clientConnect->disconnectFromHost();
+        qDebug()<<ss;
+    }
     if (readData == "HTC 802d"){
 
         qDebug()<<"HTC Connect";
         qDebug()<<"str:"<<str;
+        ui->teNetwork->insertPlainText("客户端是李沛然");
+        ui->teNetwork->insertPlainText("\n");
+        ui->teNetwork->insertPlainText("客户端采集数据");
+        ui->teNetwork->insertPlainText("\n");
         strDataNoHandle[0] = (char)(bit3+48);
 
         strDataNoHandle[1] = (flagLED+48);
@@ -94,7 +129,7 @@ void MainWindow::sendMessage(){
         }
         QString ss(strDataNoHandle);
         clientConnect->write(ss.toStdString().c_str(),strlen(ss.toStdString().c_str()));
-        //clientConnect->disconnectFromHost();
+
     }
     if (readData == "Read"){
         qDebug()<<"Read!";
@@ -132,7 +167,50 @@ void MainWindow::sendMessage(){
 
     }
 
+    if (readData == "1"){//收到开关LED的信号
+        ui->teNetwork->insertPlainText("接收控制信号");
+        ui->teNetwork->insertPlainText("\n");
+        flagRelay = !flagRelay;
+        if (flagRelay){countSerialSend++; bit3+=1; ui->btnLED1->setText(tr("关闭"));}
+        else{countSerialSend--; bit3-=1; ui->btnLED1->setText(tr("开启"));}
+        sbuf = "*1";
+        dataCalcAndSend();
+        if (str[3] == '\0'){
+            strDataNoHandle[0] = '0';
+        }else
+        strDataNoHandle[0] = (char)(bit3+48);
+
+        strDataNoHandle[1] = (flagLED+48);
+        strDataNoHandle[2] = (flagRelay+48);
+        strDataNoHandle[3] = (flagInfrared+48);
+
+        strDataNoHandle[4] = dataSmoke[0];
+        strDataNoHandle[5] = dataSmoke[1];
+        strDataNoHandle[6] = dataSmoke[2];
+
+        strDataNoHandle[7] = dataTemp[0];
+        strDataNoHandle[8] = dataTemp[1];
+        strDataNoHandle[9] = dataTemp[2];
+        strDataNoHandle[10] = dataTemp[3];
+
+        strDataNoHandle[11] = dataLight[0];
+        strDataNoHandle[12] = dataLight[1];
+
+        strDataNoHandle[13] = '\0';
+        for(int i = 0; i<=12; i++){
+            if (strDataNoHandle[i] == '\0'){
+                strDataNoHandle[i] = '0';
+            }
+        }
+        QString ss(strDataNoHandle);
+
+        clientConnect->write(ss.toStdString().c_str(),strlen(ss.toStdString().c_str()));
+
+    }
+
     if (readData == "2"){//收到开关继电器的信号
+        ui->teNetwork->insertPlainText("接收控制信号");
+        ui->teNetwork->insertPlainText("\n");
         flagRelay = !flagRelay;
         if (flagRelay){countSerialSend++; bit3+=2; ui->btnRelay->setText(tr("关闭"));}
         else{countSerialSend--; bit3-=2; ui->btnRelay->setText(tr("开启"));}
@@ -202,6 +280,20 @@ void MainWindow::openPort(){//Open the Port and Ready to read from COM
         serialport->setStopBits(QSerialPort::OneStop);
         serialport->setFlowControl(QSerialPort::NoFlowControl);
         //senddata(sbuf);
+        ui->btnInfrared->setEnabled(true);
+        ui->btnLED1->setEnabled(true);
+        ui->btnLED2->setEnabled(true);
+        ui->btnLED3->setEnabled(true);
+        ui->btnLED4->setEnabled(true);
+        ui->btnRelay->setEnabled(true);
+        ui->btnSmoke->setEnabled(true);
+        ui->btnLight->setEnabled(true);
+        ui->btnTemp->setEnabled(true);
+        ui->btnShowData->setEnabled(true);
+        ui->btnStartServer->setEnabled(true);
+        ui->btnSend->setEnabled(true);
+        ui->lblPort->setText(portName+"已经打开");
+        ui->btnOpenSerial->setEnabled(false);
         connect(serialport,SIGNAL(readyRead()), this, SLOT(readdata()));
     }else{
         QMessageBox box;
@@ -300,7 +392,14 @@ void MainWindow::readdata(){    //Read data from SerialPort and According it on 
     switch (num) {
     case 3:
         data[0]=str[3];
-        ui->lblInfrared->setText(data);
+        if (data == "0"){
+            //ui->lblInfrared->setText("有人");
+            strPeople = "没人";
+        }else{
+            strPeople = "有人";
+            //ui->lblInfrared->setText("没人");
+        }
+         ui->lblInfrared->setText(strPeople);
         break;
     case 4:
         dataSmoke[0]=str[3];
@@ -319,12 +418,25 @@ void MainWindow::readdata(){    //Read data from SerialPort and According it on 
         dataLight[0]=str[3];
         dataLight[1]=str[4];
         ui->lblLight->setText(dataLight);
+        if(flagShow)
+            emit isShow();
         break;
     default:
         break;
     }
     ui->teRecData->insertPlainText(str);
     ui->teRecData->insertPlainText("\n");
+//    if(flagShow){
+//        ui->teShowData->insertPlainText("红外感应:"+strPeople);
+//        ui->teShowData->insertPlainText("\n");
+//        ui->teShowData->insertPlainText("烟雾强度:"+dataSmoke);
+//        ui->teShowData->insertPlainText("\n");
+//        ui->teShowData->insertPlainText("当前温度:"+dataTemp);
+//        ui->teShowData->insertPlainText("\n");
+//        ui->teShowData->insertPlainText("光线强度:"+dataLight);
+//        ui->teShowData->insertPlainText("\n");
+//        ui->teShowData->insertPlainText("\n");
+//    }
 }
 
 void MainWindow::dataCalcAndSend(){//Calc and Deal the Data,and turn it into a QString:sbuf
@@ -333,7 +445,7 @@ void MainWindow::dataCalcAndSend(){//Calc and Deal the Data,and turn it into a Q
     char str = (char)bit3;
     sbuf += str;
     sbuf += "0000#";
-
+    qDebug()<<sbuf;
     threadSend.setMessage(sbuf, serialport);//a thread,to send String use SerialPort
     threadSend.start();
 
@@ -379,7 +491,7 @@ void MainWindow::on_btnRelay_clicked(){//继电器
 void MainWindow::on_btnInfrared_clicked(){//红外
     flagInfrared = !flagInfrared;
     if (flagInfrared){countSerialSend++; bit3+=4; ui->btnInfrared->setText(tr("关闭"));}
-    else{countSerialSend--;bit3-=4;ui->btnInfrared->setText(tr("开启"));}
+    else{countSerialSend--;bit3-=4;ui->btnInfrared->setText(tr("开启"));ui->lblInfrared->setText("未采集");}
     sbuf = "*3";
     dataCalcAndSend();
 
@@ -388,7 +500,7 @@ void MainWindow::on_btnInfrared_clicked(){//红外
 void MainWindow::on_btnSmoke_clicked(){//烟雾
     flagSmoke = !flagSmoke;
     if (flagSmoke){countSerialSend++; bit3+=8; ui->btnSmoke->setText(tr("关闭"));}
-    else{countSerialSend--;bit3-=8;ui->btnSmoke->setText(tr("开启"));}
+    else{countSerialSend--;bit3-=8;ui->btnSmoke->setText(tr("开启"));ui->lblSmoke->setText("未采集");}
     sbuf = "*4";
     dataCalcAndSend();
 
@@ -397,7 +509,7 @@ void MainWindow::on_btnSmoke_clicked(){//烟雾
 void MainWindow::on_btnTemp_clicked(){//温度
     flagTemp = !flagTemp;
     if (flagTemp){countSerialSend++; bit3+=16; ui->btnTemp->setText(tr("关闭"));}
-    else{countSerialSend--;bit3-=16;ui->btnTemp->setText(tr("开启"));}
+    else{countSerialSend--;bit3-=16;ui->btnTemp->setText(tr("开启"));ui->lblTemp->setText("未采集");}
     sbuf = "*5";
     dataCalcAndSend();
 
@@ -406,8 +518,54 @@ void MainWindow::on_btnTemp_clicked(){//温度
 void MainWindow::on_btnLight_clicked(){//光敏
     flagLight = !flagLight;
     if (flagLight){countSerialSend++; bit3+=32; ui->btnLight->setText(tr("关闭"));}
-    else{countSerialSend--;bit3-=32;ui->btnLight->setText(tr("开启"));}
+    else{countSerialSend--;bit3-=32;ui->btnLight->setText(tr("开启"));ui->lblLight->setText("未采集");}
     sbuf = "*6";
     dataCalcAndSend();
 
+}
+
+void MainWindow::on_btnShowData_clicked()
+{
+    flagShow = !flagShow;
+    if (flagShow){
+        threadSend.stop();//Stop the Thread before destroy UI
+        threadSend.wait();
+        ui->btnShowData->setText(tr("停止显示"));
+        if (!flagInfrared){flagShow = true;countSerialSend++; bit3+=4; ui->btnInfrared->setEnabled(false);}
+        else{ui->btnInfrared->setEnabled(false);}
+        if (!flagSmoke){flagShow = true;countSerialSend++; bit3+=8; ui->btnSmoke->setEnabled(false);}
+        else{ui->btnSmoke->setEnabled(false);}
+        if (!flagTemp){flagShow = true;countSerialSend++; bit3+=16; ui->btnTemp->setEnabled(false);}
+        else{ui->btnTemp->setEnabled(false);}
+        if (!flagSmoke){flagLight= true;countSerialSend++; bit3+=32; ui->btnLight->setEnabled(false);}
+        else{ui->btnLight->setEnabled(false);}
+    }else{
+        ui->btnShowData->setText(tr("显示数据"));
+
+        /*if (flagInfrared){*/flagShow = false;countSerialSend++; bit3-=4; ui->btnInfrared->setEnabled(true);
+        /*if (flagSmoke){*/flagShow = false;countSerialSend++; bit3-=8; ui->btnSmoke->setEnabled(true);
+        /*if (flagTemp){*/flagShow = false;countSerialSend++; bit3-=16; ui->btnTemp->setEnabled(true);
+        /*if (flagSmoke){*/flagLight= false;countSerialSend++; bit3-=32; ui->btnLight->setEnabled(true);
+        ui->lblInfrared->setText("未采集");
+        ui->lblSmoke->setText("未采集");
+        ui->lblTemp->setText("未采集");
+        ui->lblLight->setText("未采集");
+    }
+    sbuf = "*7";
+
+    dataCalcAndSend();
+
+}
+
+
+void MainWindow::showData(){
+    ui->teShowData->insertPlainText("红外感应:"+strPeople);
+    ui->teShowData->insertPlainText("\n");
+    ui->teShowData->insertPlainText("烟雾强度:"+dataSmoke);
+    ui->teShowData->insertPlainText("\n");
+    ui->teShowData->insertPlainText("当前温度:"+dataTemp);
+    ui->teShowData->insertPlainText("\n");
+    ui->teShowData->insertPlainText("光线强度:"+dataLight);
+    ui->teShowData->insertPlainText("\n");
+    ui->teShowData->insertPlainText("\n");
 }
