@@ -10,6 +10,18 @@
     <height>520</height>
    </rect>
   </property>
+  <property name="minimumSize">
+   <size>
+    <width>890</width>
+    <height>520</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>890</width>
+    <height>520</height>
+   </size>
+  </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
@@ -406,14 +418,14 @@
        <x>10</x>
        <y>30</y>
        <width>110</width>
-       <height>14</height>
+       <height>16</height>
       </rect>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_4">
       <item>
        <widget class="QLabel" name="label_7">
         <property name="text">
-         <string>当前温度</string>
+         <string>当前温度:</string>
         </property>
        </widget>
       </item>

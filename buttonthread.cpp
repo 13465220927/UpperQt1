@@ -24,14 +24,14 @@ void ButtonThread::setMessage(QString message, QSerialPort *serialport){
 }
 
 void ButtonThread::senddata(QString buf){
-    qDebug()<<buf;
+   // qDebug()<<buf;
     serial->write(buf.toLatin1());
 }
 
 void ButtonThread::printMessage(){
     senddata(messageStr);
    // qDebug()<<messageStr;
-    sleep(3);
+    sleep(2);
 }
 
 

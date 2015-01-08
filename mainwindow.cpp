@@ -49,40 +49,31 @@ void MainWindow::newConnect(){
 void MainWindow::sendMessage(){
     qDebug()<<"Before Sent";
     QByteArray block;
-    QByteArray readData;
+    QString readData;
+    //QByteArray readData;
     QDataStream out(&block, QIODevice::WriteOnly);
     QString ss;
     QByteArray strDataNoHandle;
     out.setVersion(QDataStream::Qt_4_8);
     out<<(quint16)0;
-    //out<<tr("HOST Connect!");
     out.device()->seek(0);
     out<<(quint16)(block.size()-sizeof(quint16));
 
     connect(clientConnect, &QTcpSocket::disconnected, clientConnect,&QTcpSocket::deleteLater);
     qDebug()<<clientConnect->peerAddress();
-    readData = clientConnect->readAll();
-    if (readData == "HTC 802d"){
-        qDebug()<<"李沛然的手机发了个数据过来！";
-        ss = "000000000000";
-        clientConnect->write(ss.toStdString().c_str(),strlen(ss.toStdString().c_str()));
-        //clientConnect->disconnectFromHost();
 
-        qDebug()<<ss;
-        qDebug()<<readData;
-    }
-    if (readData == "Read"){
-//        QString str = sbuf;
-//        QByteArray ba = str.toLatin1();
-//        ch = ba.data();
-        strDataNoHandle[0] = str[3];
+    readData = clientConnect->readAll();
+
+    if (readData == "HTC 802d"){
+
+        qDebug()<<"HTC Connect";
+        qDebug()<<"str:"<<str;
+        strDataNoHandle[0] = (char)(bit3+48);
+
         strDataNoHandle[1] = (flagLED+48);
         strDataNoHandle[2] = (flagRelay+48);
         strDataNoHandle[3] = (flagInfrared+48);
-        //char* ch;
-        //QString str = ui->lblSmoke->text();
-        //QByteArray ba = str.toLatin1();
-        //ch = ba.data();
+
         strDataNoHandle[4] = dataSmoke[0];
         strDataNoHandle[5] = dataSmoke[1];
         strDataNoHandle[6] = dataSmoke[2];
@@ -95,29 +86,90 @@ void MainWindow::sendMessage(){
         strDataNoHandle[11] = dataLight[0];
         strDataNoHandle[12] = dataLight[1];
 
+        strDataNoHandle[13] = '\0';
+        for(int i = 0; i<=12; i++){
+            if (strDataNoHandle[i] == '\0'){
+                strDataNoHandle[i] = '0';
+            }
+        }
+        QString ss(strDataNoHandle);
+        clientConnect->write(ss.toStdString().c_str(),strlen(ss.toStdString().c_str()));
+        //clientConnect->disconnectFromHost();
+    }
+    if (readData == "Read"){
+        qDebug()<<"Read!";
+        //qint16 Handle0 = ((qint16)flagLED)||((qint16)flagRelay<<1)||((qint16)flagInfrared<<2)||((qint16)flagSmoke<<3)||((qint16)flagTemp<<4)||((qint16)flagLight<<5);
 
-        qDebug()<<strDataNoHandle;
+        strDataNoHandle[0] = (char)(bit3+48);
+
+        strDataNoHandle[1] = (flagLED+48);
+        strDataNoHandle[2] = (flagRelay+48);
+        strDataNoHandle[3] = (flagInfrared+48);
+
+        strDataNoHandle[4] = dataSmoke[0];
+        strDataNoHandle[5] = dataSmoke[1];
+        strDataNoHandle[6] = dataSmoke[2];
+
+        strDataNoHandle[7] = dataTemp[0];
+        strDataNoHandle[8] = dataTemp[1];
+        strDataNoHandle[9] = dataTemp[2];
+        strDataNoHandle[10] = dataTemp[3];
+
+        strDataNoHandle[11] = dataLight[0];
+        strDataNoHandle[12] = dataLight[1];
+
+        strDataNoHandle[13] = '\0';
+        for(int i = 0; i<=12; i++){
+            if (strDataNoHandle[i] == '\0'){
+                strDataNoHandle[i] = '0';
+            }
+        }
+        QString ss(strDataNoHandle);
+
+        clientConnect->write(ss.toStdString().c_str(),strlen(ss.toStdString().c_str()));
+        qDebug()<<"ss"<<ss;
 
 
     }
-    if (readData == "10"){
+
+    if (readData == "2"){//收到开关继电器的信号
+        flagRelay = !flagRelay;
+        if (flagRelay){countSerialSend++; bit3+=2; ui->btnRelay->setText(tr("关闭"));}
+        else{countSerialSend--; bit3-=2; ui->btnRelay->setText(tr("开启"));}
+        sbuf = "*2";
+        dataCalcAndSend();
+        if (str[3] == '\0'){
+            strDataNoHandle[0] = '0';
+        }else
+        strDataNoHandle[0] = (char)(bit3+48);
+
+        strDataNoHandle[1] = (flagLED+48);
+        strDataNoHandle[2] = (flagRelay+48);
+        strDataNoHandle[3] = (flagInfrared+48);
+
+        strDataNoHandle[4] = dataSmoke[0];
+        strDataNoHandle[5] = dataSmoke[1];
+        strDataNoHandle[6] = dataSmoke[2];
+
+        strDataNoHandle[7] = dataTemp[0];
+        strDataNoHandle[8] = dataTemp[1];
+        strDataNoHandle[9] = dataTemp[2];
+        strDataNoHandle[10] = dataTemp[3];
+
+        strDataNoHandle[11] = dataLight[0];
+        strDataNoHandle[12] = dataLight[1];
+
+        strDataNoHandle[13] = '\0';
+        for(int i = 0; i<=12; i++){
+            if (strDataNoHandle[i] == '\0'){
+                strDataNoHandle[i] = '0';
+            }
+        }
+        QString ss(strDataNoHandle);
+
+        clientConnect->write(ss.toStdString().c_str(),strlen(ss.toStdString().c_str()));
 
     }
-
-    if (readData == "11"){
-
-    }
-
-    if (readData == "20"){
-
-    }
-
-    if (readData == "21"){
-
-    }
-
-
-    //if (readData == "")
 
     ui->lbConnStatus->setText("Client Connect Success");
 }
@@ -242,7 +294,7 @@ void MainWindow::senddata(QString buf){
 
 void MainWindow::readdata(){    //Read data from SerialPort and According it on UI
     str = serialport->readAll();
-    qDebug()<<str;
+  //  qDebug()<<str;
     qint8 num = (qint8)(str[1]-48);
 
     switch (num) {
@@ -260,7 +312,7 @@ void MainWindow::readdata(){    //Read data from SerialPort and According it on 
         dataTemp[0]=str[3];
         dataTemp[1]=str[4];
         dataTemp[2]=str[5];
-        dataTemp[4]=str[6];
+        dataTemp[3]=str[6];
         ui->lblTemp->setText(dataTemp);
         break;
     case 6:
@@ -277,7 +329,7 @@ void MainWindow::readdata(){    //Read data from SerialPort and According it on 
 
 void MainWindow::dataCalcAndSend(){//Calc and Deal the Data,and turn it into a QString:sbuf
 
-    bit3+=32;
+    bit3+=48;
     char str = (char)bit3;
     sbuf += str;
     sbuf += "0000#";
@@ -285,8 +337,8 @@ void MainWindow::dataCalcAndSend(){//Calc and Deal the Data,and turn it into a Q
     threadSend.setMessage(sbuf, serialport);//a thread,to send String use SerialPort
     threadSend.start();
 
-    bit3-=32;
-    qDebug()<<"bit3="<<bit3;
+    bit3-=48;
+ //   qDebug()<<"bit3="<<bit3;
 
 }
 
