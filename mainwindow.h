@@ -33,6 +33,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
 
     QTcpServer *tcpServer;
+    QTcpSocket *clientConnect;
     QSerialPort *serialport;
     void InitUI();
     void senddata(QString buf);
@@ -53,6 +54,7 @@ private slots:
     void sendMessage();
     void sendToSerial();
     //void dataCalcAndSend();
+    void newConnect();
 
     void on_btnRelay_clicked();
     void on_btnInfrared_clicked();
@@ -80,6 +82,12 @@ private:
     bool flagSmoke;
     bool flagTemp;
     bool flagLight;
+
+    QByteArray data;
+    QByteArray dataTemp;
+    QByteArray dataSmoke;
+    QByteArray dataLight;
+    QByteArray str;
 
     wchar_t keyname[256]; //键名数组
     char keyvalue[256];  //键值数组

@@ -25,7 +25,7 @@ MainWindow::MainWindow(QWidget *parent) :
     else{
         ui->lbConnStatus->setText("ListenSucc");
     }
-    connect(tcpServer,SIGNAL(newConnection()),this,SLOT(sendMessage())); //连接信号和相应槽函数
+    connect(tcpServer,SIGNAL(newConnection()),this,SLOT(newConnect())); //连接信号和相应槽函数
 
     serialport = new QSerialPort(this);
     connect(ui->btnOpenSerial, SIGNAL(clicked()), this, SLOT(openPort()));
@@ -35,29 +35,90 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->btnLED2, SIGNAL(clicked()), this, SLOT(btn_led2_clicked()));
     connect(ui->btnLED3, SIGNAL(clicked()), this, SLOT(btn_led3_clicked()));
     connect(ui->btnLED4, SIGNAL(clicked()), this, SLOT(btn_led4_clicked()));
-    connect(this,SIGNAL(writeFinish()), this, SLOT(dataCalcAndSend()));
 }
 
 /*Send Message to Android ,
  * use by TCP socket.
  * and this is the TCPServer
 */
+
+void MainWindow::newConnect(){
+    clientConnect = tcpServer->nextPendingConnection();
+    connect(clientConnect, SIGNAL(readyRead()), this, SLOT(sendMessage()));
+}
 void MainWindow::sendMessage(){
     qDebug()<<"Before Sent";
     QByteArray block;
+    QByteArray readData;
     QDataStream out(&block, QIODevice::WriteOnly);
+    QString ss;
+    QByteArray strDataNoHandle;
     out.setVersion(QDataStream::Qt_4_8);
     out<<(quint16)0;
-    out<<tr("HOST Connect!");
+    //out<<tr("HOST Connect!");
     out.device()->seek(0);
     out<<(quint16)(block.size()-sizeof(quint16));
 
-
-    QTcpSocket *clientConnect = tcpServer->nextPendingConnection();
     connect(clientConnect, &QTcpSocket::disconnected, clientConnect,&QTcpSocket::deleteLater);
+    qDebug()<<clientConnect->peerAddress();
+    readData = clientConnect->readAll();
+    if (readData == "HTC 802d"){
+        qDebug()<<"李沛然的手机发了个数据过来！";
+        ss = "000000000000";
+        clientConnect->write(ss.toStdString().c_str(),strlen(ss.toStdString().c_str()));
+        //clientConnect->disconnectFromHost();
 
-    clientConnect->write(block);
-    clientConnect->disconnectFromHost();
+        qDebug()<<ss;
+        qDebug()<<readData;
+    }
+    if (readData == "Read"){
+//        QString str = sbuf;
+//        QByteArray ba = str.toLatin1();
+//        ch = ba.data();
+        strDataNoHandle[0] = str[3];
+        strDataNoHandle[1] = (flagLED+48);
+        strDataNoHandle[2] = (flagRelay+48);
+        strDataNoHandle[3] = (flagInfrared+48);
+        //char* ch;
+        //QString str = ui->lblSmoke->text();
+        //QByteArray ba = str.toLatin1();
+        //ch = ba.data();
+        strDataNoHandle[4] = dataSmoke[0];
+        strDataNoHandle[5] = dataSmoke[1];
+        strDataNoHandle[6] = dataSmoke[2];
+
+        strDataNoHandle[7] = dataTemp[0];
+        strDataNoHandle[8] = dataTemp[1];
+        strDataNoHandle[9] = dataTemp[2];
+        strDataNoHandle[10] = dataTemp[3];
+
+        strDataNoHandle[11] = dataLight[0];
+        strDataNoHandle[12] = dataLight[1];
+
+
+        qDebug()<<strDataNoHandle;
+
+
+    }
+    if (readData == "10"){
+
+    }
+
+    if (readData == "11"){
+
+    }
+
+    if (readData == "20"){
+
+    }
+
+    if (readData == "21"){
+
+    }
+
+
+    //if (readData == "")
+
     ui->lbConnStatus->setText("Client Connect Success");
 }
 
@@ -180,32 +241,32 @@ void MainWindow::senddata(QString buf){
 }
 
 void MainWindow::readdata(){    //Read data from SerialPort and According it on UI
-    QByteArray str = serialport->readAll();
+    str = serialport->readAll();
     qDebug()<<str;
     qint8 num = (qint8)(str[1]-48);
-    QByteArray data;
+
     switch (num) {
     case 3:
         data[0]=str[3];
         ui->lblInfrared->setText(data);
         break;
     case 4:
-        data[0]=str[3];
-        data[1]=str[4];
-        data[2]=str[5];
-        ui->lblSmoke->setText(data);
+        dataSmoke[0]=str[3];
+        dataSmoke[1]=str[4];
+        dataSmoke[2]=str[5];
+        ui->lblSmoke->setText(dataSmoke);
         break;
     case 5:
-        data[0]=str[3];
-        data[1]=str[4];
-        data[2]=str[5];
-        data[4]=str[6];
-        ui->lblTemp->setText(data);
+        dataTemp[0]=str[3];
+        dataTemp[1]=str[4];
+        dataTemp[2]=str[5];
+        dataTemp[4]=str[6];
+        ui->lblTemp->setText(dataTemp);
         break;
     case 6:
-        data[0]=str[3];
-        data[1]=str[4];
-        ui->lblLight->setText(data);
+        dataLight[0]=str[3];
+        dataLight[1]=str[4];
+        ui->lblLight->setText(dataLight);
         break;
     default:
         break;
