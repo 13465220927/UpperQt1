@@ -33,6 +33,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->btnShowData->setEnabled(false);
     ui->btnStartServer->setEnabled(false);
     ui->btnSend->setEnabled(false);
+    ui->teNetwork->setReadOnly(true);
+    ui->teRecData->setReadOnly(true);
+    ui->teShowData->setReadOnly(true);
+
 
     serialport = new QSerialPort(this);
     connect(tcpServer,SIGNAL(newConnection()),this,SLOT(newConnect())); //连接信号和相应槽函数
@@ -62,6 +66,7 @@ void MainWindow::btn_starttcp_clicked(){
         ui->lbConnStatus->setText("ListenSucc");
         ui->teNetwork->insertPlainText("服务器已启动");
         ui->teNetwork->insertPlainText("\n");
+        ui->btnStartServer->setEnabled(false);
     }
 }
 void MainWindow::newConnect(){
@@ -89,10 +94,11 @@ void MainWindow::sendMessage(){
     readData = clientConnect->readAll();
     if (flagShow){
         ss = "实时刷新中,访问被拒绝";
-        ui->teNetwork->insertPlainText("实时刷新中,访问被拒绝");
+        ui->teNetwork->insertPlainText("实时刷新中，访问被拒绝");
         ui->teNetwork->insertPlainText("\n");
         clientConnect->write(ss.toStdString().c_str(),strlen(ss.toStdString().c_str()));
         clientConnect->disconnectFromHost();
+        ui->btnStartServer->setText("开启服务器");
         qDebug()<<ss;
     }
     if (readData == "HTC 802d"){
@@ -170,8 +176,8 @@ void MainWindow::sendMessage(){
     if (readData == "1"){//收到开关LED的信号
         ui->teNetwork->insertPlainText("接收控制信号");
         ui->teNetwork->insertPlainText("\n");
-        flagRelay = !flagRelay;
-        if (flagRelay){countSerialSend++; bit3+=1; ui->btnLED1->setText(tr("关闭"));}
+        flagLED = !flagLED;
+        if (flagLED){countSerialSend++; bit3+=1; ui->btnLED1->setText(tr("关闭"));}
         else{countSerialSend--; bit3-=1; ui->btnLED1->setText(tr("开启"));}
         sbuf = "*1";
         dataCalcAndSend();
@@ -531,25 +537,29 @@ void MainWindow::on_btnShowData_clicked()
         threadSend.stop();//Stop the Thread before destroy UI
         threadSend.wait();
         ui->btnShowData->setText(tr("停止显示"));
-        if (!flagInfrared){flagShow = true;countSerialSend++; bit3+=4; ui->btnInfrared->setEnabled(false);}
+        if (!flagInfrared){flagInfrared = true;countSerialSend++; bit3+=4; ui->btnInfrared->setEnabled(false);}
         else{ui->btnInfrared->setEnabled(false);}
-        if (!flagSmoke){flagShow = true;countSerialSend++; bit3+=8; ui->btnSmoke->setEnabled(false);}
+        if (!flagSmoke){flagSmoke = true;countSerialSend++; bit3+=8; ui->btnSmoke->setEnabled(false);}
         else{ui->btnSmoke->setEnabled(false);}
-        if (!flagTemp){flagShow = true;countSerialSend++; bit3+=16; ui->btnTemp->setEnabled(false);}
+        if (!flagTemp){flagTemp = true;countSerialSend++; bit3+=16; ui->btnTemp->setEnabled(false);}
         else{ui->btnTemp->setEnabled(false);}
-        if (!flagSmoke){flagLight= true;countSerialSend++; bit3+=32; ui->btnLight->setEnabled(false);}
+        if (!flagLight){flagLight= true;countSerialSend++; bit3+=32; ui->btnLight->setEnabled(false);}
         else{ui->btnLight->setEnabled(false);}
     }else{
         ui->btnShowData->setText(tr("显示数据"));
 
-        /*if (flagInfrared){*/flagShow = false;countSerialSend++; bit3-=4; ui->btnInfrared->setEnabled(true);
-        /*if (flagSmoke){*/flagShow = false;countSerialSend++; bit3-=8; ui->btnSmoke->setEnabled(true);
-        /*if (flagTemp){*/flagShow = false;countSerialSend++; bit3-=16; ui->btnTemp->setEnabled(true);
+        /*if (flagInfrared){*/flagInfrared = false;countSerialSend++; bit3-=4; ui->btnInfrared->setEnabled(true);
+        /*if (flagSmoke){*/flagSmoke = false;countSerialSend++; bit3-=8; ui->btnSmoke->setEnabled(true);
+        /*if (flagTemp){*/flagTemp = false;countSerialSend++; bit3-=16; ui->btnTemp->setEnabled(true);
         /*if (flagSmoke){*/flagLight= false;countSerialSend++; bit3-=32; ui->btnLight->setEnabled(true);
         ui->lblInfrared->setText("未采集");
         ui->lblSmoke->setText("未采集");
         ui->lblTemp->setText("未采集");
         ui->lblLight->setText("未采集");
+        ui->btnInfrared->setText("开启");
+        ui->btnSmoke->setText("开启");
+        ui->btnTemp->setText("开启");
+        ui->btnLight->setText("开启");
     }
     sbuf = "*7";
 
