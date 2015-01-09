@@ -21,6 +21,7 @@
 #include <QThread>
 #include <QtCore>
 #include "buttonthread.h"
+#include "logindia.h"
 namespace Ui {
 class MainWindow;
 }
